@@ -2,6 +2,6 @@ name: locate_marsquakes
 channels: 
     - conda-forge
 dependencies:
-    - python=3.9
     - obspy
-    - jupyter
+    # - python=3.9
+    # - jupyter
