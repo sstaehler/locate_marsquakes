@@ -3,5 +3,4 @@ channels:
     - conda-forge
 dependencies:
     - obspy
-    # - python=3.9
-    # - jupyter
+    - ipympl

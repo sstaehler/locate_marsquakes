@@ -37,7 +37,7 @@ if __name__=='__main__':
         st.differentiate()
         st.filter('highpass', freq=1. / 15)
         st.trim(starttime=origin_time[event_name],
-                endtime=origin_time[event_name] + 900
+                endtime=origin_time[event_name] + 1800
                 )
         st.write(f'{event_name}.mseed', format='MSEED')
         for tr in st:
@@ -50,7 +50,7 @@ if __name__=='__main__':
             f_max = 10
             scalogram = cwt(tr.data, dt, 12, f_min, f_max)
             f = np.geomspace(f_min, f_max, scalogram.shape[0])
-            dt = 10
+            dt = 5
             df = 2
             np.savez(f'{event_name}_spec_{tr.id}.npz', f=f[::df], t=t[::dt],
                      spec=np.abs(scalogram[::df, ::dt]))
