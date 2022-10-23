@@ -58,9 +58,9 @@ class Locate_1(widgets.HBox):
 
         with output:
             self.initialize_figure(initial_tP, initial_tS)
-            self.h_dotS = None  # ax_dist.plot(dist, t_S_theo, 'o')
-            self.h_dotP = None  # ax_dist.plot(dist, t_P_theo, 'o')
-            self.h_line = None  # ax_dist.plot([dist, dist], [t_P_theo, t_S_theo], 'k')
+            self.h_dotS = None
+            self.h_dotP = None
+            self.h_line = None
             self.h_line_cont = None
 
             # Plot initial seismogram
@@ -123,32 +123,43 @@ class Locate_1(widgets.HBox):
     def initialize_figure(self, initial_tP, initial_tS):
         self.fig = plt.figure(figsize=(8, 12), constrained_layout=True)
         gs = GridSpec(6, 5, figure=self.fig)
+
+        # Plot axis for seismograms and spectrograms
         self.ax_Z = self.fig.add_subplot(gs[0, 0:3])
         self.ax_N = self.fig.add_subplot(gs[1, 0:3], sharex=self.ax_Z)
         self.ax_E = self.fig.add_subplot(gs[2, 0:3], sharex=self.ax_Z)
-        self.ax_dist = self.fig.add_subplot(gs[0:2, 3:])
-        # Plot for distance
-        self.ax_map = self.fig.add_subplot(gs[3:, :])
-        # self.ax_map.set_xlim(-90., 90.)
-        self.ax_map.set_ylim(-90., 90.)
-        self.ax_map.set_ylabel('latitude')
-        self.ax_map.set_aspect('equal', 'box')
-        self.ax_map.yaxis.tick_right()
-        self.ax_map.yaxis.set_label_position('right')
-        self.h_circ = None
-
-        img = mpimg.imread('./helpers/MOLA_rolled.png')
-
-        self.ax_map.imshow(img, extent=(-0, 360, -90, 90), cmap='gist_earth')
-        self.ax_map.set_xlim(060., 260.)
+        self.ax_Z.text(0.97, 0.02, 'vertical', ha='right', va='bottom',
+                       transform=self.ax_Z.transAxes, bbox=dict(facecolor='white', alpha=0.9))
+        self.ax_N.text(0.97, 0.02, 'north/south', ha='right', va='bottom',
+                       transform=self.ax_N.transAxes, bbox=dict(facecolor='white', alpha=0.9))
+        self.ax_E.text(0.97, 0.02, 'east/west', ha='right', va='bottom',
+                       transform=self.ax_E.transAxes, bbox=dict(facecolor='white', alpha=0.9))
         self.ax_Z.set_xlim(50, 200)
         self.ax_E.set_xlabel('time / second')
+
         self.l_P_Z = self.ax_Z.axvline(initial_tP, c=c.color_phases['P'])
         self.l_P_N = self.ax_N.axvline(initial_tP, c=c.color_phases['P'], ls='dashed')
         self.l_P_E = self.ax_E.axvline(initial_tP, c=c.color_phases['P'], ls='dashed')
         self.l_S_Z = self.ax_Z.axvline(initial_tS, c=c.color_phases['S'], ls='dashed')
         self.l_S_N = self.ax_N.axvline(initial_tS, c=c.color_phases['S'])
         self.l_S_E = self.ax_E.axvline(initial_tS, c=c.color_phases['S'])
+
+        # Plot axis for map with distance
+        self.ax_map = self.fig.add_subplot(gs[3:, :])
+        self.ax_map.set_ylim(-90., 90.)
+        self.ax_map.set_ylabel('latitude')
+        self.ax_map.set_xlabel('longitude')
+        self.ax_map.set_aspect('equal', 'box')
+        self.ax_map.yaxis.tick_right()
+        self.ax_map.yaxis.set_label_position('right')
+        self.h_circ = None
+
+        img = mpimg.imread('./helpers/MOLA_rolled.png')
+        self.ax_map.imshow(img, extent=(-0, 360, -90, 90), cmap='gist_earth')
+        self.ax_map.set_xlim(060., 260.)
+
+        # Plot axis for travel time/distance plot
+        self.ax_dist = self.fig.add_subplot(gs[0:2, 3:])
         for phase in ['P', 'S', 'PP', 'SS', 'ScS']:
             t = np.asarray(self.TT[phase])
             self.ax_dist.plot(t[:, 0], t[:, 1], label=phase, c=c.color_phases[phase])
@@ -159,8 +170,15 @@ class Locate_1(widgets.HBox):
         self.ax_dist.xaxis.set_label_position('top')
         self.ax_dist.yaxis.tick_right()
         self.ax_dist.yaxis.set_label_position('right')
-        self.ax_dist.set_xlabel('distance')
-        self.ax_dist.set_ylabel('t$_S$ - t$_P$')
+        self.ax_dist.set_xlabel('distance / degree')
+        self.ax_dist.set_ylabel('t$_S$ - t$_P$ / seconds')
+
+        # Plot axis for distance text
+        self.ax_dist_text = self.fig.add_subplot(gs[2, 3:])
+        self.h_text = self.ax_dist_text.text(0.02, 0.97, 'No distance yet', ha='left', va='top',
+                                             transform=self.ax_dist_text.transAxes)
+        self.ax_dist_text.set_xticks([])
+        self.ax_dist_text.set_yticks([])
 
     # callback functions
     def update_distance(self, tP, tS):  # , h_dotP, h_dotS, h_line):
@@ -174,7 +192,10 @@ class Locate_1(widgets.HBox):
         if self.h_line_cont is not None:
             [h.remove() for h in self.h_line_cont]
         if self.h_circ is not None:
-            self.h_circ.remove()  # [h.remove() for h in h_circ]
+            try:
+                self.h_circ.remove()
+            except:
+                pass
 
         dist = taup_distance.get_dist(model=self.model, tSmP=tS - tP, depth=50)
 
@@ -196,12 +217,23 @@ class Locate_1(widgets.HBox):
             self.ax_map.set_xlim(060., 260.)
             self.ax_map.yaxis.set_label_position('right')
 
+            dist_string = f'Distance found!\n' + \
+                          f'$t_S - t_P=${tS - tP:5.1f} sec\n' + \
+                          f'Distance: {dist:5.1f} degree'
+            self.h_text.set_text(dist_string)
+            self.h_text.set_color('black')
+            self.h_text.set_weight('bold')
 
         else:
-            self.h_dotS = None  # ax_dist.plot(dist, t_S_theo, 'o')
-            self.h_dotP = None  # ax_dist.plot(dist, t_P_theo, 'o')
-            self.h_line = None  # ax_dist.plot([dist, dist], [t_P_theo, t_S_theo], 'k')
+            self.h_dotS = None
+            self.h_dotP = None
+            self.h_line = None
             self.h_line_cont = None
+            dist_string = f'No Distance found\n' + \
+                          f'for $t_S - t_P=${tS - tP:5.1f} sec\n'
+            self.h_text.set_text(dist_string)
+            self.h_text.set_color('darkred')
+            self.h_text.set_weight('bold')
 
     def update_tP(self, change):
         # global tP, tS
@@ -209,8 +241,7 @@ class Locate_1(widgets.HBox):
         self.l_P_Z.set_xdata([change.new, change.new])
         self.l_P_N.set_xdata([change.new, change.new])
         self.l_P_E.set_xdata([change.new, change.new])
-        self.update_distance(tP=change.new, tS=self.tS)  # ,
-        # h_dotP=h_dotP, h_dotS=h_dotS, h_line=h_line)
+        self.update_distance(tP=change.new, tS=self.tS)
         self.fig.canvas.draw()
         self.tP = change.new
 
@@ -220,13 +251,11 @@ class Locate_1(widgets.HBox):
         self.l_S_Z.set_xdata([change.new, change.new])
         self.l_S_E.set_xdata([change.new, change.new])
         self.l_S_N.set_xdata([change.new, change.new])
-        self.update_distance(tP=self.tP, tS=change.new)  # ,
-        # h_dotP=h_dotP, h_dotS=h_dotS, h_line=h_line)
+        self.update_distance(tP=self.tP, tS=change.new)
         self.fig.canvas.draw()
         self.tS = change.new
 
     def update_event(self, change):
-        # global f_spec, t_spec, spec_all, event, plot_spec
         self.set_event(change.new)
 
         if self.plot_spec:
@@ -237,7 +266,8 @@ class Locate_1(widgets.HBox):
                 spec = 20 * np.log10(self.spec_all[comp])
                 self.h_spec[comp] = ax.pcolormesh(self.t_spec, self.f_spec, spec,
                                                   vmin=-210,
-                                                  vmax=np.percentile(spec, q=90))
+                                                  vmax=np.percentile(spec, q=90) + 5,
+                                                  cmap='plasma')
                 ax.set_yscale('log')
                 ax.set_ylim(0.05, 10)
                 ax.set_ylabel('frequency / Hz')
