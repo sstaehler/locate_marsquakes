@@ -57,53 +57,7 @@ class Locate_1(widgets.HBox):
         self.plot_spec = False
 
         with output:
-            self.fig = plt.figure(figsize=(8, 12), constrained_layout=True)
-            self.event = initial_event
-            self.f_spec = self.all_f_spec[self.event]
-            self.t_spec = self.all_t_spec[self.event]
-            self.spec_all = self.all_spec_all[self.event]
-            self.st = self.all_st[self.event]
-
-            gs = GridSpec(6, 5, figure=self.fig)
-            self.ax_Z = self.fig.add_subplot(gs[0, 0:3])
-            self.ax_N = self.fig.add_subplot(gs[1, 0:3], sharex=self.ax_Z)
-            self.ax_E = self.fig.add_subplot(gs[2, 0:3], sharex=self.ax_Z)
-            self.ax_dist = self.fig.add_subplot(gs[0:2, 3:])
-
-            # Plot for distance
-            self.ax_map = self.fig.add_subplot(gs[3:, :])
-            self.ax_map.set_xlim(-90., 90.)
-            self.ax_map.set_ylim(-90., 90.)
-            self.ax_map.set_ylabel('latitude')
-            self.ax_map.set_aspect('equal', 'box')
-            self.ax_map.yaxis.tick_right()
-            self.ax_map.yaxis.set_label_position('right')
-            self.h_circ = None
-            img = mpimg.imread('helpers/Mars_MGS_MOLA_DEM_mosaic_global_1024.jpg')
-            self.ax_map.imshow(img, extent=(-180, 180, -90, 90), cmap='gist_earth')
-
-            self.ax_Z.set_xlim(50, 200)
-            self.ax_E.set_xlabel('time / second')
-
-            self.l_P_Z = self.ax_Z.axvline(initial_tP, c=c.color_phases['P'])
-            self.l_P_N = self.ax_N.axvline(initial_tP, c=c.color_phases['P'], ls='dashed')
-            self.l_P_E = self.ax_E.axvline(initial_tP, c=c.color_phases['P'], ls='dashed')
-            self.l_S_Z = self.ax_Z.axvline(initial_tS, c=c.color_phases['S'], ls='dashed')
-            self.l_S_N = self.ax_N.axvline(initial_tS, c=c.color_phases['S'])
-            self.l_S_E = self.ax_E.axvline(initial_tS, c=c.color_phases['S'])
-
-            for phase in ['P', 'S', 'PP', 'SS', 'ScS']:
-                t = np.asarray(self.TT[phase])
-                self.ax_dist.plot(t[:, 0], t[:, 1], label=phase, c=c.color_phases[phase])
-            self.ax_dist.set_xlim(0, 100)
-            self.ax_dist.set_ylim(0, 1000)
-            self.ax_dist.legend()
-            self.ax_dist.xaxis.tick_top()
-            self.ax_dist.xaxis.set_label_position('top')
-            self.ax_dist.yaxis.tick_right()
-            self.ax_dist.yaxis.set_label_position('right')
-            self.ax_dist.set_xlabel('distance')
-            self.ax_dist.set_ylabel('t$_S$ - t$_P$')
+            self.initialize_figure(initial_tP, initial_tS)
             self.h_dotS = None  # ax_dist.plot(dist, t_S_theo, 'o')
             self.h_dotP = None  # ax_dist.plot(dist, t_P_theo, 'o')
             self.h_line = None  # ax_dist.plot([dist, dist], [t_P_theo, t_S_theo], 'k')
@@ -112,6 +66,9 @@ class Locate_1(widgets.HBox):
             # Plot initial seismogram
             self.l_seis = dict()
             self.h_spec = dict()
+
+            self.set_event(initial_event)
+
             for tr, ax, comp in zip(self.st, (self.ax_Z, self.ax_N, self.ax_E),
                                     ('Z', 'N', 'E')):
                 self.l_seis[comp] = ax.plot(tr.times(), tr.data * 1e9,
@@ -156,6 +113,55 @@ class Locate_1(widgets.HBox):
         # add to children
         self.children = [controls, output]
 
+    def set_event(self, initial_event):
+        self.event = initial_event
+        self.f_spec = self.all_f_spec[self.event]
+        self.t_spec = self.all_t_spec[self.event]
+        self.spec_all = self.all_spec_all[self.event]
+        self.st = self.all_st[self.event]
+
+    def initialize_figure(self, initial_tP, initial_tS):
+        self.fig = plt.figure(figsize=(8, 12), constrained_layout=True)
+        gs = GridSpec(6, 5, figure=self.fig)
+        self.ax_Z = self.fig.add_subplot(gs[0, 0:3])
+        self.ax_N = self.fig.add_subplot(gs[1, 0:3], sharex=self.ax_Z)
+        self.ax_E = self.fig.add_subplot(gs[2, 0:3], sharex=self.ax_Z)
+        self.ax_dist = self.fig.add_subplot(gs[0:2, 3:])
+        # Plot for distance
+        self.ax_map = self.fig.add_subplot(gs[3:, :])
+        # self.ax_map.set_xlim(-90., 90.)
+        self.ax_map.set_ylim(-90., 90.)
+        self.ax_map.set_ylabel('latitude')
+        self.ax_map.set_aspect('equal', 'box')
+        self.ax_map.yaxis.tick_right()
+        self.ax_map.yaxis.set_label_position('right')
+        self.h_circ = None
+
+        img = mpimg.imread('./helpers/MOLA_rolled.png')
+
+        self.ax_map.imshow(img, extent=(-0, 360, -90, 90), cmap='gist_earth')
+        self.ax_map.set_xlim(060., 260.)
+        self.ax_Z.set_xlim(50, 200)
+        self.ax_E.set_xlabel('time / second')
+        self.l_P_Z = self.ax_Z.axvline(initial_tP, c=c.color_phases['P'])
+        self.l_P_N = self.ax_N.axvline(initial_tP, c=c.color_phases['P'], ls='dashed')
+        self.l_P_E = self.ax_E.axvline(initial_tP, c=c.color_phases['P'], ls='dashed')
+        self.l_S_Z = self.ax_Z.axvline(initial_tS, c=c.color_phases['S'], ls='dashed')
+        self.l_S_N = self.ax_N.axvline(initial_tS, c=c.color_phases['S'])
+        self.l_S_E = self.ax_E.axvline(initial_tS, c=c.color_phases['S'])
+        for phase in ['P', 'S', 'PP', 'SS', 'ScS']:
+            t = np.asarray(self.TT[phase])
+            self.ax_dist.plot(t[:, 0], t[:, 1], label=phase, c=c.color_phases[phase])
+        self.ax_dist.set_xlim(0, 100)
+        self.ax_dist.set_ylim(0, 1000)
+        self.ax_dist.legend()
+        self.ax_dist.xaxis.tick_top()
+        self.ax_dist.xaxis.set_label_position('top')
+        self.ax_dist.yaxis.tick_right()
+        self.ax_dist.yaxis.set_label_position('right')
+        self.ax_dist.set_xlabel('distance')
+        self.ax_dist.set_ylabel('t$_S$ - t$_P$')
+
     # callback functions
     def update_distance(self, tP, tS):  # , h_dotP, h_dotS, h_line):
         # global h_dotP, h_dotS, h_line, h_line_cont, h_circ
@@ -184,10 +190,10 @@ class Locate_1(widgets.HBox):
             self.h_line = self.ax_dist.plot([dist, dist], [t_P_theo, t_S_theo], 'k')
             self.h_line_cont = self.ax_dist.plot([dist, dist], [t_P_theo, 1000], 'k--')
 
-            circ = Circle(xy=(0., 3.4), radius=dist, ec='k', fill=False)
+            circ = Circle(xy=(135., 3.5), radius=dist, ec='k', fill=False)
             self.h_circ = self.ax_map.add_patch(circ)
 
-            self.ax_map.set_xlim(-90, 90)
+            self.ax_map.set_xlim(060., 260.)
             self.ax_map.yaxis.set_label_position('right')
 
 
@@ -221,11 +227,7 @@ class Locate_1(widgets.HBox):
 
     def update_event(self, change):
         # global f_spec, t_spec, spec_all, event, plot_spec
-        self.event = change.new
-        self.f_spec = self.all_f_spec[self.event]
-        self.t_spec = self.all_t_spec[self.event]
-        self.spec_all = self.all_spec_all[self.event]
-        self.st = self.all_st[self.event]
+        self.set_event(change.new)
 
         if self.plot_spec:
             for comp, ax in zip(['Z', 'N', 'E'], (self.ax_Z, self.ax_N, self.ax_E)):
