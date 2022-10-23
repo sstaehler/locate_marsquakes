@@ -154,6 +154,12 @@ class Locate_1(widgets.HBox):
         self.ax_map.yaxis.set_label_position('right')
         self.h_circ = None
 
+        # Mark InSight location
+        from matplotlib.patches import RegularPolygon
+        regpol = RegularPolygon(xy=(c.lon_insight, c.lat_insight), numVertices=3, radius=4,
+                                fc='darkred', ec='k')
+        self.ax_map.add_patch(regpol)
+
         img = mpimg.imread('./helpers/MOLA_rolled.png')
         self.ax_map.imshow(img, extent=(-0, 360, -90, 90), cmap='gist_earth')
         self.ax_map.set_xlim(060., 260.)
@@ -211,7 +217,7 @@ class Locate_1(widgets.HBox):
             self.h_line = self.ax_dist.plot([dist, dist], [t_P_theo, t_S_theo], 'k')
             self.h_line_cont = self.ax_dist.plot([dist, dist], [t_P_theo, 1000], 'k--')
 
-            circ = Circle(xy=(135., 3.5), radius=dist, ec='k', fill=False)
+            circ = Circle(xy=(c.lon_insight, c.lat_insight), radius=dist, ec='k', fill=False)
             self.h_circ = self.ax_map.add_patch(circ)
 
             self.ax_map.set_xlim(060., 260.)
@@ -296,7 +302,8 @@ class Locate_1(widgets.HBox):
                 spec = 20 * np.log10(self.spec_all[comp])
                 self.h_spec[comp] = ax.pcolormesh(self.t_spec, self.f_spec, spec,
                                                   vmin=-210,
-                                                  vmax=np.percentile(spec, q=90))
+                                                  vmax=np.percentile(spec, q=90) + 5,
+                                                  cmap='plasma')
                 ax.set_yscale('log')
                 ax.set_ylim(0.05, 10)
                 ax.set_ylabel('frequency / Hz')

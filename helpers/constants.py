@@ -16,3 +16,6 @@ color_phases = dict(P='C0',
 
 color_seis = 'darkgrey'
 lw_seis = 0.5
+
+lon_insight = 135.623447
+lat_insight = 4.502384
