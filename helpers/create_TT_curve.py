@@ -10,7 +10,7 @@ Create npz file with travel time curves
 from obspy.taup import TauPyModel
 import numpy as np
 
-model = TauPyModel('../model_data/AK_model_84.npz')
+model = TauPyModel('../model_data/InSight_KKS21B.npz')
 TT = dict(P=[],
           S=[],
           PP=[],

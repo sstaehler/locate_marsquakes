@@ -21,12 +21,12 @@ import matplotlib.image as mpimg
 from helpers.create_specgrams import origin_time
 
 
-class locate_1(widgets.HBox):
+class Locate_1(widgets.HBox):
     def __init__(self):
         super().__init__()
         plt.close('all')
         output = widgets.Output()
-        self.model = TauPyModel('model_data/AK_model_84.npz')
+        self.model = TauPyModel('model_data/InSight_KKS21B.npz')
         self.TT = np.load('helpers/traveltimes.npz')
 
         self.all_st = dict()
