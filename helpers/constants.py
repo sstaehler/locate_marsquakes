@@ -15,7 +15,11 @@ color_phases = dict(P='C0',
                     ScS='C4')
 
 color_seis = 'darkgrey'
-lw_seis = 0.5
+lw_seis = 0.6
+color_baz = 'darkblue'
+lw_baz = 2.
 
 lon_insight = 135.623447
 lat_insight = 4.502384
+
+radius_mars = 3389.5
