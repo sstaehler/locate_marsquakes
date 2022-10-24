@@ -263,13 +263,11 @@ class Locate2(widgets.HBox):
             self.h_dotP = None
             self.h_line = None
             self.h_line_cont = None
-            '''
             dist_string = f'No Distance found\n' + \
                           f'for $t_S - t_P=${tS - tP:5.1f} sec\n'
             self.h_text.set_text(dist_string)
             self.h_text.set_color('darkred')
             self.h_text.set_weight('bold')
-            '''
 
     def update_tP(self, change):
         # global tP, tS
@@ -330,15 +328,18 @@ class Locate2(widgets.HBox):
         self.l_seis_E_zoom = self.ax_E_zoom.plot(np.linspace(-5., 10., tr_E.stats.npts),
                                                  tr_E.data * 1e9, lw=c.lw_seis, c=c.color_seis)
 
-    def save_event(self, change):
-        print(self.event, self.baz, self.dist)
+    def save_event(self, value):
         if self.dist is not None:
             lat_event, lon_event = shoot(latitude_1_degree=c.lat_insight, longitude_1_degree=c.lon_insight,
                                          bearing_degree=self.baz, distance_km=np.deg2rad(self.dist), radius_km=1.)
             lon_event = lon_event % 360
-            circ = Circle(xy=(lon_event, lat_event), radius=2., ec='k', fill=True, label=self.event)
-            self.h_event_saved.append(self.ax_map.add_patch(circ))
+            l = self.ax_map.scatter(x=[lon_event], y=[lat_event], s=100, marker='*',
+                                    c=f'C{len(self.h_event_saved)}', edgecolors='k',
+                                    label=self.event)
+            self.h_event_saved.append(l)
             self.ax_map.legend()
+            print(f'{self.event}, BAZ: {self.baz:5.1f}°, dist: {self.dist:5.1f}°, ' +
+                  f'pos.: {lon_event:5.1f}°E, {lat_event:5.1f}°N ')
 
     def update_baz(self, change):
         self.baz = change.new
