@@ -23,3 +23,5 @@ lon_insight = 135.623447
 lat_insight = 4.502384
 
 radius_mars = 3389.5
+
+event_list = ['S0235b', 'S0173a', 'S0183a', 'S0185a', 'S0809a', 'S1048d', 'S1133c', 'S1094b']

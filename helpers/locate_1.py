@@ -91,7 +91,7 @@ class Locate1(widgets.HBox):
                                       step=1, description='S-arrival')
         event_combobox = widgets.Dropdown(
             value=initial_event,
-            options=['S0235b', 'S0173a', 'S0185a', 'S1094b'],
+            options=c.event_list,
             description='Event'
         )
         spec_checkbox = widgets.Checkbox(
