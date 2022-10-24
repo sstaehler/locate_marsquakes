@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Create small spectrogram file for each event
+Class for exercise 2: Determine backazimuth
 :copyright:
-    Simon Stähler (mail@simonstaehler.com), 2019
+    Simon Stähler (mail@simonstaehler.com), 2022
 :license:
     None
 """
@@ -18,7 +18,6 @@ from taup_distance import taup_distance
 from obspy.taup import TauPyModel
 from helpers import constants as c
 import matplotlib.image as mpimg
-from helpers.create_specgrams import origin_time
 from scipy.interpolate import interp2d
 
 
@@ -35,7 +34,7 @@ class Locate2(widgets.HBox):
         self.all_f_spec = dict()
         self.all_t_spec = dict()
 
-        for event in origin_time.keys():
+        for event in c.origin_time.keys():
             st = obspy.read(f'helpers/{event}.mseed')
             st.integrate()
 
@@ -95,9 +94,14 @@ class Locate2(widgets.HBox):
         tS_slider = widgets.IntSlider(value=initial_tS,
                                       min=0, max=1200,
                                       step=1, description='S-arrival')
+        link_P_S = widgets.widget_link.Link(
+            (tP_slider, 'value'),
+            (tS_slider, 'min'))
         BAZ_slider = widgets.IntSlider(value=initial_baz,
                                        min=0, max=360,
                                        step=1, description='Backazimuth')
+
+        save_button = widgets.Button(description='save event')
         event_combobox = widgets.Dropdown(
             value=initial_event,
             options=c.event_list,
@@ -108,10 +112,11 @@ class Locate2(widgets.HBox):
         tS_slider.observe(self.update_tS, 'value')
         BAZ_slider.observe(self.update_baz, 'value')
         event_combobox.observe(self.update_event, 'value')
+        save_button.on_click(self.save_event)
 
         controls_1 = widgets.HBox([tP_slider, tS_slider])
 
-        controls_2 = widgets.HBox([event_combobox, BAZ_slider])
+        controls_2 = widgets.HBox([event_combobox, BAZ_slider, save_button])
         controls = widgets.VBox([controls_1, controls_2])
         # controls.layout = make
         # widgets.HBox([controls, output])
@@ -167,9 +172,14 @@ class Locate2(widgets.HBox):
         # Plot axis for zoomed P-wave
         self.ax_N_zoom = self.fig.add_subplot(gs[2, 3])
         self.ax_E_zoom = self.fig.add_subplot(gs[2, 4], sharex=self.ax_N_zoom, sharey=self.ax_N_zoom)
+        self.ax_N_zoom.text(0.97, 0.02, 'north/south', ha='right', va='bottom', size=9,
+                            transform=self.ax_N_zoom.transAxes, bbox=dict(facecolor='white', alpha=0.9))
+        self.ax_E_zoom.text(0.97, 0.02, 'east/west', ha='right', va='bottom', size=9,
+                            transform=self.ax_E_zoom.transAxes, bbox=dict(facecolor='white', alpha=0.9))
         for ax in (self.ax_E_zoom, self.ax_N_zoom):
             ax.axvline(0, ls='dashed', c=c.color_phases['P'])
             ax.set_xlabel('time after P')
+            ax.set_yticks([])
 
         # Plot axis for map with distance
         self.ax_map = self.fig.add_subplot(gs[3:, :])
@@ -181,6 +191,7 @@ class Locate2(widgets.HBox):
         self.ax_map.yaxis.set_label_position('right')
         self.h_circ = None
         self.h_event = None
+        self.h_event_saved = []
 
         # Mark InSight location
         from matplotlib.patches import RegularPolygon
@@ -203,11 +214,15 @@ class Locate2(widgets.HBox):
     def update_distance(self, tP, tS):  # , h_dotP, h_dotS, h_line):
         # global h_dotP, h_dotS, h_line, h_line_cont, h_circ
         if self.h_circ is not None:
-            [l.remove() for l in self.h_circ]
+            # print(self.h_circ)
+            # self.h_circ.remove()
+            [l.remove() for l in self.h_circ if l is not None]
+            self.h_circ = None
 
         if self.h_event is not None:
             try:
                 self.h_event.remove()
+                self.h_event = None
             except:
                 pass
 
@@ -225,8 +240,10 @@ class Locate2(widgets.HBox):
                                            self.equi_lat(azi, self.dist),
                                            c='k', lw=1, ls='dashed')
 
-            lat_event, lon_event = shoot(latitude_1_degree=c.lat_insight, longitude_1_degree=c.lon_insight,
-                                         bearing_degree=self.baz, distance_km=np.deg2rad(self.dist), radius_km=1.)
+            lat_event, lon_event = shoot(latitude_1_degree=c.lat_insight,
+                                         longitude_1_degree=c.lon_insight,
+                                         bearing_degree=self.baz,
+                                         distance_km=np.deg2rad(self.dist), radius_km=1.)
             lon_event = lon_event % 360
 
             circ = Circle(xy=(lon_event, lat_event), radius=2., ec='k', fill=True)
@@ -312,6 +329,16 @@ class Locate2(widgets.HBox):
             [l.remove() for l in self.l_seis_E_zoom]
         self.l_seis_E_zoom = self.ax_E_zoom.plot(np.linspace(-5., 10., tr_E.stats.npts),
                                                  tr_E.data * 1e9, lw=c.lw_seis, c=c.color_seis)
+
+    def save_event(self, change):
+        print(self.event, self.baz, self.dist)
+        if self.dist is not None:
+            lat_event, lon_event = shoot(latitude_1_degree=c.lat_insight, longitude_1_degree=c.lon_insight,
+                                         bearing_degree=self.baz, distance_km=np.deg2rad(self.dist), radius_km=1.)
+            lon_event = lon_event % 360
+            circ = Circle(xy=(lon_event, lat_event), radius=2., ec='k', fill=True, label=self.event)
+            self.h_event_saved.append(self.ax_map.add_patch(circ))
+            self.ax_map.legend()
 
     def update_baz(self, change):
         self.baz = change.new

@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Create small spectrogram file for each event
+Class for exercise 1: Determine distance
 :copyright:
-    Simon Stähler (mail@simonstaehler.com), 2019
+    Simon Stähler (mail@simonstaehler.com), 2022
 :license:
     None
 """
@@ -18,7 +18,6 @@ from taup_distance import taup_distance
 from obspy.taup import TauPyModel
 from helpers import constants as c
 import matplotlib.image as mpimg
-from helpers.create_specgrams import origin_time
 
 
 class Locate1(widgets.HBox):
@@ -34,7 +33,7 @@ class Locate1(widgets.HBox):
         self.all_f_spec = dict()
         self.all_t_spec = dict()
 
-        for event in origin_time.keys():
+        for event in c.origin_time.keys():
             st = obspy.read(f'helpers/{event}.mseed')
             st.integrate()
 
@@ -99,6 +98,9 @@ class Locate1(widgets.HBox):
             value=False
         )
 
+        link_P_S = widgets.widget_link.Link(
+            (tP_slider, 'value'),
+            (tS_slider, 'min'))
         tP_slider.observe(self.update_tP, 'value')
         tS_slider.observe(self.update_tS, 'value')
         event_combobox.observe(self.update_event, 'value')

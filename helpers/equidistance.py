@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Create small spectrogram file for each event
+Create array with lines of constant baz and distance
 :copyright:
-    Simon Stähler (mail@simonstaehler.com), 2019
+    Simon Stähler (mail@simonstaehler.com), 2022
 :license:
     None
 """
